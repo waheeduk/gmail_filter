@@ -1,0 +1,108 @@
+from __future__ import print_function
+import os.path
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+
+# If modifying these scopes, delete the file token.json.
+SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.labels']
+
+def main():
+    """Shows basic usage of the Gmail API.
+    Lists the user's Gmail labels.
+    """
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    service = build('gmail', 'v1', credentials=creds)
+
+    # Call the Gmail API
+    results = service.users().labels().list(userId='me').execute()
+    #gets the first FIVE unread messages
+    #remove maxResults to get ALL unread messages
+    unread_messages = service.users().messages().list(userId='me', maxResults = 5).execute()
+    labels = results.get('labels', [])
+    unread = unread_messages.get('unread_messages', [])
+
+#structure of unread messages below, way to get id
+#print(unread_messages['messages'][0]['id'])
+
+    #list of message ids to check
+    check = []
+
+#retrieves the id of the unread messages
+    for n in range(len(unread_messages['messages'])):
+        print(unread_messages['messages'][n]['id'])
+        #adds them to a list called check
+        check.append(unread_messages['messages'][n]['id'])
+
+    print(check)
+
+    # for n in range(len(check)):
+    # 	#save below to a variable
+    #     print(service.users().messages().get(userId="me", id= check[n]).execute())
+        #use the variable to look at the header
+        #use the header to find the name
+
+    senders = {}
+
+    #gets the first email in the list of the first FIVE written into the check 
+    #list and calls it first
+    first = service.users().messages().get(userId="me", id= check[0]).execute()
+    #searches through the items in the email headers to get the sender
+    for n in first['payload']['headers']:
+        if ('name', 'From') in n.items():
+            print('sender found')
+            print(n)
+            print(n['value'])
+            #checks if the sender is in a dictionary of all unaswered email 
+            #senders, and then counts how many have been sent by those senders
+            if n['value'] in senders:
+                senders[n['value']] += 1
+            else:
+                senders[n['value']] = 1
+        
+    print(senders)
+
+
+
+    #check if sender in a dict called sender, if so increase value for key 
+    #sender by 1
+    #check the list for most frequent spammers
+    #output a message stating which spammers are most frequent
+    #asks if you want to check if you can unsubscribe
+    #if users states yes, will check latest email from senders, and then parse
+    #email and click unsubscribe button
+    #output a message to state if sucessful
+    
+
+    #DELETE ALL UNREAD EMAILS OLDER THAN SIX MONTHS
+
+#finds the senders of the unread messages
+
+    # if not labels:
+    #     print('No labels found.')
+    # else:
+    #     print('Labels:')
+    #     print(labels)
+    #     for label in labels:
+    #         print(label['name'])
+                                                                                      
+if __name__ == '__main__':
+    main()             
