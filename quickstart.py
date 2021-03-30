@@ -36,7 +36,8 @@ def main():
     results = service.users().labels().list(userId='me').execute()
     #gets the first FIVE unread messages
     #remove maxResults to get ALL unread messages
-    unread_messages = service.users().messages().list(userId='me', maxResults = 5).execute()
+    unread_messages = service.users().messages().list(userId='me', maxResults = 100).execute()
+    print('100 unread messages should have been checked')
     labels = results.get('labels', [])
     unread = unread_messages.get('unread_messages', [])
 
@@ -48,11 +49,11 @@ def main():
 
 #retrieves the id of the unread messages
     for n in range(len(unread_messages['messages'])):
-        print(unread_messages['messages'][n]['id'])
+        # print(unread_messages['messages'][n]['id'])
         #adds them to a list called check
         check.append(unread_messages['messages'][n]['id'])
 
-    print(check)
+    # print(check)
 
     # for n in range(len(check)):
     # 	#save below to a variable
@@ -64,24 +65,24 @@ def main():
 
     #gets the first email in the list of the first FIVE written into the check 
     #list and calls it first
-    first = service.users().messages().get(userId="me", id= check[0]).execute()
+    for x in range(len(check)):
+        first = service.users().messages().get(userId="me", id= check[x]).execute()
     #searches through the items in the email headers to get the sender
-    for n in first['payload']['headers']:
-        if ('name', 'From') in n.items():
-            print('sender found')
-            print(n)
-            print(n['value'])
+        for n in first['payload']['headers']:
+            if ('name', 'From') in n.items():
+                # print('sender found')
+                # print(n)
+                # print(n['value'])
             #checks if the sender is in a dictionary of all unaswered email 
             #senders, and then counts how many have been sent by those senders
-            if n['value'] in senders:
-                senders[n['value']] += 1
-            else:
-                senders[n['value']] = 1
+                if n['value'] in senders:
+                    senders[n['value']] += 1
+                else:
+                    senders[n['value']] = 1
         
-    print(senders)
-
-
-
+    for sender, count in senders.items():
+        print(sender, count)
+    
     #check if sender in a dict called sender, if so increase value for key 
     #sender by 1
     #check the list for most frequent spammers
