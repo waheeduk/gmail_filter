@@ -34,10 +34,10 @@ def main():
 
     # Call the Gmail API
     results = service.users().labels().list(userId='me').execute()
-    #gets the first FIVE unread messages
-    #remove maxResults to get ALL unread messages
-    unread_messages = service.users().messages().list(userId='me', maxResults = 100).execute()
-    print('100 unread messages should have been checked')
+    #gets the first however many unread messages
+    #need to set maxResults to get more than 100 unread messages
+    unread_messages = service.users().messages().list(userId='me', maxResults = 1000).execute()
+    print('unread messages should have been checked')
     labels = results.get('labels', [])
     unread = unread_messages.get('unread_messages', [])
 
@@ -79,7 +79,9 @@ def main():
                     senders[n['value']] += 1
                 else:
                     senders[n['value']] = 1
-        
+
+    print(len(check))
+# bin
     for sender, count in senders.items():
         print(sender, count)
     
