@@ -4,9 +4,18 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+import datetime
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.labels']
+
+
+def convert_str_time(str_time):
+    """converts a date in a string, formatted as Sat, 10 Apr 2021 18:42:19 +0000
+    to a datetime value, and excises the timezone"""
+    str_time = str_time[:-6]
+    str_time = datetime.datetime.strptime(str_time, '%a, %d %b %Y %X')
+    return(str_time)
 
 def main():
     """Shows basic usage of the Gmail API.
@@ -36,7 +45,7 @@ def main():
     results = service.users().labels().list(userId='me').execute()
     #gets the first however many unread messages
     #need to set maxResults to get more than 100 unread messages
-    unread_messages = service.users().messages().list(userId='me', maxResults = 1000).execute()
+    unread_messages = service.users().messages().list(userId='me', maxResults = 1).execute()
     print('unread messages should have been checked')
     labels = results.get('labels', [])
     unread = unread_messages.get('unread_messages', [])
@@ -69,6 +78,14 @@ def main():
         first = service.users().messages().get(userId="me", id= check[x]).execute()
     #searches through the items in the email headers to get the sender
         for n in first['payload']['headers']:
+            if ('name', 'Date') in n.items():
+                print(n['value'])
+                #changes days to 182 ie six months or whatever value
+                if datetime.datetime.now() - convert_str_time(n['value']) > datetime.timedelta(days=2):
+                    #delete the message
+                    print('older than two days')
+                else:
+                    print('newer than two days')
             if ('name', 'From') in n.items():
                 # print('sender found')
                 # print(n)
@@ -84,6 +101,11 @@ def main():
 # bin
     for sender, count in senders.items():
         print(sender, count)
+
+    #deletes all unread messages older than six months
+
+
+# {'name': 'Date', 'value': 'Sat, 10 Apr 2021 18:42:19 +0000'}
     
     #check if sender in a dict called sender, if so increase value for key 
     #sender by 1
